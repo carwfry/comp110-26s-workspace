@@ -1,94 +1,76 @@
-"""Data related utility functions."""
+"""EX09: Data related utility functions."""
 
-__author__ = ["", ""]
+__author__ = ["730566916"]
 
-from csv import DictReader
+import csv
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 
-
-def get_keys(
-    input_dict: (
-        dict[str, list[str]]
-        | dict[str, list[int]]
-        | dict[str, list[str | int]]
-        | dict[str, int]
-        | dict[str, str]
-    ),
-) -> list[str]:
-    result: list[str] = []
-    for key in input_dict:
-        result.append(key)
-
-    return result
-
-
-def convert_columns_to_int(
-    data: dict[str, list[str]], columns_conv: list[str]
-) -> dict[str, list[str | int]]:
-    """Convert the data in the selected columns to be of type int."""
-    # Create new table to store converted data
-    data_converted: dict[str, list[int | str]] = {}
-
-    # Iterate through column names (keys of the dictionary)
-    for col_name in data:
-        # Create new list to append converted values to
-        data_converted[col_name] = []
-
-        # Declare the converted value with a type of either int or str
-        converted_value: int | str
-
-        # Iterate through data values in the column
-        for value in data[col_name]:
-            # If this column is in the list of columns to be converted,
-            # cast it to an int
-            if col_name in columns_conv:
-                converted_value = int(value)
-            else:
-                converted_value = value
-
-            # Add it to the new column of values, the list we created
-            # that we have a reference to at data_converted[col_name]
-            data_converted[col_name].append(converted_value)
-
-    return data_converted
-
-"""These are the functions we wrote/will write in class!"""
-def read_csv_rows(filename: str) -> list[dict[str, str]]:
-    """Read the rows of a CSV into a 'table'."""
+def read_csv_rows(file_path: str) -> list[dict[str, str]]:
+    """Read a CSV file into a list of row dictionaries."""
     result: list[dict[str, str]] = []
-
-    # Open a handle to the data file
-    file_handle = open(filename, "r", encoding="utf8")
-
-    # Prepare to read the data file as a CSV rather than just strings.
-    csv_reader = DictReader(file_handle)
-
-    # Read each row of the CSV line-by-line
-    for row in csv_reader:
-        result.append(row)
-
-    # Close the file when done, to free its resources.
-    file_handle.close()
-
-    return result
-
-
-def column_values(table: list[dict[str, str]], column: str) -> list[str]:
-    """Produce a list[str] of all values in a single column."""
-    result: list[str] = []
-
-    for row in table:
-        item: str = row[column]
-        result.append(item)
-
+    with open(file_path, "r", encoding="utf-8") as csv_file:
+        reader = csv.DictReader(csv_file)
+        for row in reader:
+            result.append(row)
     return result
 
 
 def columnar(row_table: list[dict[str, str]]) -> dict[str, list[str]]:
-    """Transform a row-oriented table to a column-oriented table."""
+    """Convert a row-oriented table to a column-oriented table."""
     result: dict[str, list[str]] = {}
-
-    first_row: dict[str, str] = row_table[0]
-    for column in first_row:
-        result[column] = column_values(row_table, column)
-
+    if len(row_table) == 0:
+        return result
+    for key in row_table[0]:
+        result[key] = [row[key] for row in row_table]
     return result
+
+
+def head(column_table: dict[str, list[str]], n: int) -> dict[str, list[str]]:
+    """Return the first n rows of a column-oriented table."""
+    result: dict[str, list[str]] = {}
+    for col in column_table:
+        result[col] = column_table[col][:n]
+    return result
+
+
+def select(column_table: dict[str, list[str]], names: list[str]) -> dict[str, list[str]]:
+    """Return a subset of columns from a column-oriented table."""
+    return {name: column_table[name] for name in names if name in column_table}
+
+rows = read_csv_rows("exercises/ex09/data/survey_izzi.csv")
+cols = columnar(rows)
+head(cols, 5)
+
+subset = select(cols, ["major", "languages"])
+head(subset, 5)
+
+def filter_by_major(column_table: dict[str, list[str]], major: str) -> dict[str, list[str]]:
+    """Return only rows where the major matches the given string."""
+    result = {col: [] for col in column_table}
+    for i in range(len(column_table["major"])):
+        if column_table["major"][i] == major:
+            for col in column_table:
+                result[col].append(column_table[col][i])
+    return result
+
+env = filter_by_major(subset, "Environmental Science/Studies")
+head(env, 5)
+
+def count_languages(lang_string: str) -> int:
+    if lang_string is None:
+        return 0
+    cleaned = lang_string.replace(";", ",")
+    return len([x for x in cleaned.split(",") if x.strip() != ""])
+
+language_counts = [count_languages(x) for x in env["languages"]]
+language_counts[:10]
+
+sns.histplot(language_counts, bins=range(0, max(language_counts)+2))
+plt.gca().xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
+plt.xlabel("Number of Languages")
+plt.ylabel("Number of Students")
+plt.title("Histogram of Languages Known")
+plt.show()

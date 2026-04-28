@@ -1,0 +1,27 @@
+from __future__ import annotations
+
+class Node:
+    """Node in a singly-linked list recursive structure."""
+    value: int
+    next: Node | None
+
+    def __init__(self, value: int, next: Node | None):
+        self.value = value
+        self.next = next
+
+    def __str__(self) -> str:
+        rest:str
+        if self.next is None:
+            rest = "None"
+        else:
+            rest = str(self.next)
+        return f"{self.value} -> {rest}"
+    
+sun: Node = Node(4, None)
+moon: Node = Node(7, sun)
+
+print(moon)
+print(sun.value)
+print(moon.next)
+print(moon.next.next)
+

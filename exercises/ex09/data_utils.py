@@ -28,17 +28,40 @@ def columnar(row_table: list[dict[str, str]]) -> dict[str, list[str]]:
     return result
 
 
-def head(column_table: dict[str, list[str]], n: int) -> dict[str, list[str]]:
-    """Return the first n rows of a column-oriented table."""
+def head(column_table: dict[str, list[str]], N: int) -> dict[str, list[str]]:
     result: dict[str, list[str]] = {}
-    for col in column_table:
-        result[col] = column_table[col][:n]
+    for column in column_table:
+        result[column] = column_table[column][:N]
     return result
 
 
-def select(column_table: dict[str, list[str]], names: list[str]) -> dict[str, list[str]]:
-    """Return a subset of columns from a column-oriented table."""
-    return {name: column_table[name] for name in names if name in column_table}
+def select(column_table: dict[str, list[str]], column_names: list[str]) -> dict[str, list[str]]:
+    result: dict[str, list[str]] = {}
+    for name in column_names:
+        result[name] = column_table[name]
+    return result
+
+def concat(a: dict[str, list[str]], b: dict[str, list[str]]) -> dict[str, list[str]]:
+    result: dict[str, list[str]] = {}
+    for column in a:
+        result[column] = a[column].copy()
+    for column in b:
+        if column in result:
+            result[column] += b[column]
+        else:
+            result[column] = b[column]
+    return result
+
+
+def count(values: list[str]) -> dict[str, int]:
+    result: dict[str, int] = {}
+    for value in values:
+        if value in result:
+            result[value] += 1
+        else:
+            result[value] = 1
+    return result
+
 
 rows = read_csv_rows("exercises/ex09/data/survey_izzi.csv")
 cols = columnar(rows)
